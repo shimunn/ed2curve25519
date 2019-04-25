@@ -7,6 +7,8 @@ use std::env::args;
 use thrussh_keys::key::KeyPair;
 use thrussh_keys::load_secret_key;
 use thrussh_keys::Error;
+use std::process::exit;
+use std::error::{Error as StdError};
 
 fn main() {
     let path = args().skip(1).next().unwrap_or("id_ed25519".to_string());
@@ -18,9 +20,12 @@ fn main() {
     let key = match load_secret_key(&path, None) {
         Err(Error::KeyIsEncrypted) => {
             let pass = pass();
-            load_secret_key(&path, pass.as_ref().map(|x| &**x)).unwrap()
+            load_secret_key(&path, pass.as_ref().map(|x| &**x)).expect("Failed to load keyfile")
         }
-        Err(err) => panic!(err),
+        Err(err) => {
+         eprintln!("{}", err);
+         exit(1)
+        },
         Ok(key) => key,
     };
     if let KeyPair::Ed25519(ref secret) = key {
