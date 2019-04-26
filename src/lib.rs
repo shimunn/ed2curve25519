@@ -1,13 +1,19 @@
-use libsodium_sys::crypto_sign_ed25519_sk_to_curve25519;
+use libsodium_sys::{crypto_sign_ed25519_sk_to_curve25519, crypto_sign_ed25519_pk_to_curve25519};
 use thrussh_keys::decode_secret_key;
 use thrussh_keys::key::ed25519::SecretKey;
 use thrussh_keys::key::KeyPair;
-#[cfg(feature = "ssh")]
 pub use thrussh_keys::Error;
 
 pub fn ed25519_to_curve25519(ed25519_sk: &[u8]) -> Option<[u8; 32]> {
     let mut curve = [0u8; 32];
     Some(unsafe { crypto_sign_ed25519_sk_to_curve25519(curve.as_mut_ptr(), ed25519_sk.as_ptr()) })
+        .filter(|err| *err != -1)
+        .map(|_| curve)
+}
+
+pub fn ed25519_pk_to_curve25519(ed25519_pk: &[u8]) -> Option<[u8; 32]> {
+    let mut curve = [0u8; 32];
+    Some(unsafe { crypto_sign_ed25519_pk_to_curve25519(curve.as_mut_ptr(), ed25519_pk.as_ptr()) })
         .filter(|err| *err != -1)
         .map(|_| curve)
 }
